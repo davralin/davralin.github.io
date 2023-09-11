@@ -73,6 +73,7 @@ This is how I eventually figured it all out:
 
 
 1) Have Velero access the buckets like mentioned previously.
+
 2) Ensure Velero can actually read the buckets, and enumerate the backups in there:
 ````bash
  $ velero get backup | grep velero-offsite
@@ -90,11 +91,7 @@ velero-daily-offsite-backup-20230710231009-w5blz   Completed   63d       archive
   repoIdentifier: s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox
   snapshotID: 4779cab4
 ````
-
-The S3-address will be the address to the previous (offsite) location, and you need to ensure it's still correct - I had to switch the IP to the local MinIO-instance.
-
-We now have all we need to start the actuall restore - but I couldnt get the restore to work directly against the files from the bucket, I had to abuse a `velero-node-agent`.
-
+The S3-address will be the address to the previous (offsite) location, and you need to ensure it's correct - I had to switch the IP to the local MinIO-instance, you probably do to.
 
 5. This part might differ for you, I use Talos, so I have to do some tricks.
 First I have to find the node running the pod I am going to restore too.
