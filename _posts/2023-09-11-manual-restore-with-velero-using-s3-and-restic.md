@@ -142,7 +142,7 @@ NODE        NAME
 10.0.1.66   archivebox
 ````
 
-11. If all that looks familiar, we are ready to restore.
+11. If all that looks familiar, we are ready to restore:
 ````bash
 $ kubectl -n velero exec -it <NODE-AGENT-FOUND-IN-9> -- restic restore <SNAPSHOT-ID-FOUND-INITALLY-IN-4> -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/<POD-ID-FOUND-IN-8>/volumes/kubernetes.io~csi/<PVC-ID-FOUD-IN-7>/mount/restore/
 
@@ -151,6 +151,7 @@ enter password for repository:
 repository 16397b86 opened (version 2, compression level auto)
 restoring <Snapshot 4779cab4 of [/host_pods/2e2ed9ef-20f6-43bd-8844-cddd4f5580ca/volumes/kubernetes.io~csi/pvc-bdeb5be2-8ea9-491f-9bbe-4f58de1de88a/mount] at 2023-07-10 23:58:31.344943183 +0200 CEST by root@velero> to /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
 ````
+
 /host_pods/ is where velero-node-agent mounts /var/lib/kubelet/pods
 The password is still `static-passw0rd`.
 
