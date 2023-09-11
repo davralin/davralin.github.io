@@ -72,14 +72,14 @@ This is how I eventually figured it all out:
 - velero is the namespace Velero is installed into.
 
 
-1) Have Velero access the buckets like mentioned previously.
+1. Have Velero access the buckets like mentioned previously.
 
-2) Ensure Velero can actually read the buckets, and enumerate the backups in there:
+2. Ensure Velero can actually read the buckets, and enumerate the backups in there:
 ````bash
  $ velero get backup | grep velero-offsite
 velero-daily-offsite-backup-20230724231041   PartiallyFailed   66       0          2023-07-24 23:10:41 +0200 CEST   19d ago   velero-offsite         <none>
 ````
-3) As part of that backup-enumerate-import-thingy, Velero will also import a set of PodVolumeBackup, find those:
+3. As part of that backup-enumerate-import-thingy, Velero will also import a set of PodVolumeBackup, find those:
 ````bash
  $ kubectl -n velero get PodVolumeBackup | grep velero-offsite
 velero-daily-offsite-backup-20230710231009-w5blz   Completed   63d       archivebox        archivebox-7b7bf94fd4-rl5hm                     config           s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox         restic          offsite            107m
