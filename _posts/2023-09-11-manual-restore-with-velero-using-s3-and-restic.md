@@ -142,7 +142,7 @@ NODE        NAME
 10.0.1.66   archivebox
 ````
 
-11. If all that looks familiar, we are ready to restore!
+11. If all that looks familiar, we are ready to restore.
 ````bash
 $ kubectl -n velero exec -it <NODE-AGENT-FOUND-IN-9> -- restic restore <SNAPSHOT-ID-FOUND-INITALLY-IN-4> -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/<POD-ID-FOUND-IN-8>/volumes/kubernetes.io~csi/<PVC-ID-FOUD-IN-7>/mount/restore/
 
@@ -159,9 +159,13 @@ The password is still `static-passw0rd`.
 
 #### Lessons learned:
 - Don't backup a backup.
+
   Multiple backups from same source is the key.
+
   If not possible, I would switch tools until it is.
+
 - Probably ensure backups work before I do upgrades,
+
   but that's probably not going to happen...
 
 Sources:
