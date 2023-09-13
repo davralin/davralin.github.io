@@ -136,6 +136,8 @@ node-agent-k8q9v         1/1     Running   0          126m   10.244.0.16   rand 
 10. As a verification, the following should list the contents of the PVC you are about to restore too:
 ````bash
 $ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/<POD-ID-FOUND-IN-8>/volumes/kubernetes.io~csi/<PVC-ID-FOUD-IN-7>/mount/
+````
+````bash
 $ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/
 NODE        NAME
 10.0.1.66   .
@@ -143,9 +145,11 @@ NODE        NAME
 ````
 
 11. If all that looks familiar, we are ready to restore:
+
 ````bash
 $ kubectl -n velero exec -it <NODE-AGENT-FOUND-IN-9> -- restic restore <SNAPSHOT-ID-FOUND-INITALLY-IN-4> -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/<POD-ID-FOUND-IN-8>/volumes/kubernetes.io~csi/<PVC-ID-FOUD-IN-7>/mount/restore/
-
+````
+````bash
 $ kubectl -n velero exec -it node-agent-k8q9v -- restic restore 4779cab4 -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
 enter password for repository:
 repository 16397b86 opened (version 2, compression level auto)
