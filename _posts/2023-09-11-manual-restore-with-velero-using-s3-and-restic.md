@@ -50,7 +50,7 @@ I tried running a normal restore with Velero, that failed, it never actually res
 
 One key difference between this offsite-backup, and the rsync'ed copy of the onsite-backup, was the size of the folders (where these folders are the actuall namespaces from the originating k8s-cluster) under the `/restic`-folder in the bucket - this one actually had a reasonably accurate size according to what I expected, whereas the rsync'ed copy had ~125K as reported foldersize.
 
-### Digging through the internet for an answer
+## Digging through the internet for an answer
 
 Determined that this bucket actually had the files I wanted, I went searching for an answer.
 Using restic directly against the files in the bucket, was worthless.
@@ -162,7 +162,7 @@ The password is still `static-passw0rd`.
 12. Marvelous.
 
 
-#### Lessons learned:
+## Lessons learned:
 - Don't backup a backup.
 
   Multiple backups from same source is the key.
