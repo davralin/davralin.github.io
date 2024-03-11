@@ -1,6 +1,4 @@
-FROM docker.io/debian:stable-slim
-RUN apt update && \
-    apt install ruby-full build-essential zlib1g-dev git -y
-RUN gem install jekyll bundler
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-CMD /usr/local/bin/entrypoint.sh
+FROM registry.gitlab.com/pages/hugo/hugo_extended:0.123.8
+WORKDIR /site
+CMD [ "serve", "-D", "--bind", "0.0.0.0", "--config", "/site/hugo.yaml" ]
+ENTRYPOINT [ "hugo" ]

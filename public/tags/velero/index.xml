@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Velero on davralin</title>
+    <link>https://blog.davralin.work/tags/velero/</link>
+    <description>davralin (Velero)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 11 Sep 2023 21:26:03 +0000</lastBuildDate>
+    
+    <atom:link href="https://blog.davralin.work/tags/velero/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Manual restore with velero using s3 and restic</title>
+      <link>https://blog.davralin.work/posts/manual-restore-with-velero-using-s3-and-restic/</link>
+      <pubDate>Mon, 11 Sep 2023 21:26:03 +0000</pubDate>
+      
+      <guid>https://blog.davralin.work/posts/manual-restore-with-velero-using-s3-and-restic/</guid>
+      <description>&lt;h1 id=&#34;manual-restore-with-velero-using-s3-and-restic&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#manual-restore-with-velero-using-s3-and-restic&#34;&gt;
+        ##
+    &lt;/a&gt;
+    Manual restore with velero using s3 and restic
+&lt;/div&gt;
+&lt;/h1&gt;&lt;p&gt;Let me set the scene.&lt;/p&gt;
+&lt;p&gt;You have a cluster, you back it up using velero to a local S3-installation (minio), and remote offsite-backup&amp;rsquo;s.&lt;/p&gt;
+&lt;p&gt;The cluster runs fine-ish, untill you do an upgrade, which ends up wiping all local storage (this was entirely my fault, not the storage&amp;rsquo;s fault).&lt;/p&gt;
+&lt;p&gt;You begin to check out your restore-documentation, and work towards starting velero restore, only to find out that your local S3-installation was deleted during that move you started last week, but didn&amp;rsquo;t quite finish doing yet.
+You begin checking out your offsite-backups, which were rsync&amp;rsquo;ed copies of the before-mentioned S3-installation - only to find out that the rsync is either inconsistent, or just as bad as the S3-installation you moved away from (which had other issues, which again was my fault).&lt;/p&gt;
+&lt;p&gt;You start to give up, realising that all those files are just gone, and/or inconsistent.&lt;/p&gt;
+&lt;h2 id=&#34;offsite-backups-to-the-rescue&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#offsite-backups-to-the-rescue&#34;&gt;
+        #
+    &lt;/a&gt;
+    Offsite-backups to the rescue
+&lt;/div&gt;
+&lt;/h2&gt;&lt;p&gt;I then realized I had another S3-installation offsite, from back when I experimented with using velero to write to different S3-installations at the same time.
+The idea was that using rsync&amp;rsquo;ed S3-buckets wasn&amp;rsquo;t all that great (go figure.), so I wanted a differeny copy, from the same source.&lt;/p&gt;
+&lt;p&gt;I managed to sneakernet the files from the original bucket back to my onsite MinIO-instance, and pointed Velero to the dedicated bucket, abtly named &amp;ldquo;Velero-Offsite&amp;rdquo;, using Helm against the Velero-chart, this is accomlished with:&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-yaml&#34; data-lang=&#34;yaml&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;- &lt;span style=&#34;color:#f92672&#34;&gt;name&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;velero-offsite&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;bucket&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;velero-offsite&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;default&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;false&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;provider&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;aws&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;accessMode&lt;/span&gt;: &lt;span style=&#34;color:#ae81ff&#34;&gt;ReadOnly&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  &lt;span style=&#34;color:#f92672&#34;&gt;config&lt;/span&gt;:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;region&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;${VELERO_S3_REGION}&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;s3ForcePathStyle&lt;/span&gt;: &lt;span style=&#34;color:#66d9ef&#34;&gt;true&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;s3Url&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;${S3_URL}&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;    &lt;span style=&#34;color:#f92672&#34;&gt;publicUrl&lt;/span&gt;: &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#34;${VELERO_S3_PUBLIC_URL}&amp;#34;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;As of Helm-release 5.0.2, this is defined as a list under &lt;code&gt;configuration.backupStorageLocation&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;After import, Velero listed all those remote backups (all three of them&amp;hellip;) but as &amp;ldquo;PartiallyFailed&amp;rdquo; (there was probably more than one reason for me giving up on the project).&lt;/p&gt;
+&lt;p&gt;I tried running a normal restore with Velero, that failed, it never actually restored anything from restic, just all the k8s-resources I could just as easily reproduce with flux&amp;hellip;&lt;/p&gt;
+&lt;p&gt;One key difference between this offsite-backup, and the rsync&amp;rsquo;ed copy of the onsite-backup, was the size of the folders (where these folders are the actuall namespaces from the originating k8s-cluster) under the &lt;code&gt;/restic&lt;/code&gt;-folder in the bucket - this one actually had a reasonably accurate size according to what I expected, whereas the rsync&amp;rsquo;ed copy had ~125K as reported foldersize.&lt;/p&gt;
+&lt;h2 id=&#34;digging-through-the-internet-for-an-answer&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#digging-through-the-internet-for-an-answer&#34;&gt;
+        #
+    &lt;/a&gt;
+    Digging through the internet for an answer
+&lt;/div&gt;
+&lt;/h2&gt;&lt;p&gt;Determined that this bucket actually had the files I wanted, I went searching for an answer.
+Using restic directly against the files in the bucket, was worthless.&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;# restic ls latest -r .&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;enter password &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; repository:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Load&lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;&amp;lt;key/a7424b783b&amp;gt;, 0, 0&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt; returned error, retrying after 552.330144ms: read keys/a7424b783b93bf66c9036982766365e9cb1aa41b698d069c0879473a94d0574a: is a directory
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;...&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;(btw, Velero uses a static password of &lt;code&gt;static-passw0rd&lt;/code&gt; - might not be that safe, but I&amp;rsquo;m sure as hell glad they had something I could find!)&lt;/p&gt;
+&lt;p&gt;Much digging later, I got a clue when I found people that tried to restore single files from a restic-repo created by Velero, and more importantly - they reported success! (1) (2)&lt;/p&gt;
+&lt;p&gt;BUT HOW DID THEY DO IT?!&lt;/p&gt;
+&lt;p&gt;This is how I eventually figured it all out:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;velero-offsite is consistently used as the name for the LOCAL bucket, which originated from the offsite-location.&lt;/li&gt;
+&lt;li&gt;velero is the namespace Velero is installed into.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Have Velero access the buckets like mentioned previously.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Ensure Velero can actually read the buckets, and enumerate the backups in there:&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; $ velero get backup | grep velero-offsite
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;velero-daily-offsite-backup-20230724231041   PartiallyFailed   &lt;span style=&#34;color:#ae81ff&#34;&gt;66&lt;/span&gt;       &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          2023-07-24 23:10:41 +0200 CEST   19d ago   velero-offsite         &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;3&#34;&gt;
+&lt;li&gt;As part of that backup-enumerate-import-thingy, Velero will also import a set of PodVolumeBackup, find those:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; $ kubectl -n velero get PodVolumeBackup | grep velero-offsite
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;velero-daily-offsite-backup-20230710231009-w5blz   Completed   63d       archivebox        archivebox-7b7bf94fd4-rl5hm                     config           s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox         restic          offsite            107m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;...&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;4&#34;&gt;
+&lt;li&gt;Figure out the &lt;code&gt;RepoIdentifier&lt;/code&gt; and the &lt;code&gt;snapshotID&lt;/code&gt; of the given repo.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt; $ kubectl -n velero get PodVolumeBackup velero-daily-offsite-backup-20230710231009-w5blz -oyaml | grep -e repoIdentifier -e snapshotID
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  repoIdentifier: s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;  snapshotID: 4779cab4
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;The S3-address will be the address to the previous (offsite) location, and you need to ensure it&amp;rsquo;s correct - I had to switch the IP to the local MinIO-instance, you probably do to.&lt;/p&gt;
+&lt;ol start=&#34;5&#34;&gt;
+&lt;li&gt;This part might differ for you, I use Talos, so I have to do some tricks.
+First I have to find the node running the pod I am going to restore too.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl -n archivebox get pods  -o wide
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME                                            READY   STATUS      RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;archivebox-7b6c66c695-mlnpk                      1/1     Running     &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          57m   10.244.0.22   rand     &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Rand is a node, with IP &lt;code&gt;10.0.1.66&lt;/code&gt;&lt;/p&gt;
+&lt;ol start=&#34;6&#34;&gt;
+&lt;li&gt;Now we need to find where that Pod is mounted under the host_path.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; i in &lt;span style=&#34;color:#66d9ef&#34;&gt;$(&lt;/span&gt;talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/ | sed &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;s/10.0.1.66   //g&amp;#39;&lt;/span&gt; | grep -v -e NODE&lt;span style=&#34;color:#66d9ef&#34;&gt;)&lt;/span&gt;; &lt;span style=&#34;color:#66d9ef&#34;&gt;do&lt;/span&gt; echo $i; talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/$i/volumes/kubernetes.io~csi/; &lt;span style=&#34;color:#66d9ef&#34;&gt;done&lt;/span&gt; &amp;gt; archivebox
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;(probably not the most elegant, but I was tired and it worked.)&lt;/p&gt;
+&lt;ol start=&#34;7&#34;&gt;
+&lt;li&gt;Find the ID of the PVC.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl -n archivebox get pvc
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NAME              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;archivebox   Bound    pvc-40109437-464e-4617-8f93-ae3794d3ba0f   20Gi       RWX            ceph-filesystem   51m
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;8&#34;&gt;
+&lt;li&gt;Grep the output from command 6, for the PVC-number found in command 7.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ grep -B5 pvc-40109437-464e-4617-8f93-ae3794d3ba0f archivebox
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   .
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   pvc-04e281b8-3039-42b9-bc88-143d38f1cb49
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;afa37c6c-34e9-40b7-bc27-3f791e44bae0
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NODE        NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   .
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   pvc-40109437-464e-4617-8f93-ae3794d3ba0f
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;You have now found the pod-id (afa37c6c-34e9-40b7-bc27-3f791e44bae0)&lt;/p&gt;
+&lt;ol start=&#34;9&#34;&gt;
+&lt;li&gt;Almost there&amp;hellip; Find the node-agent running on the same host.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl -n velero get pods -o wide | grep rand
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;node-agent-k8q9v         1/1     Running   &lt;span style=&#34;color:#ae81ff&#34;&gt;0&lt;/span&gt;          126m   10.244.0.16   rand       &amp;lt;none&amp;gt;           &amp;lt;none&amp;gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;10&#34;&gt;
+&lt;li&gt;As a verification, the following should list the contents of the PVC you are about to restore too:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/&amp;lt;POD-ID-FOUND-IN-8&amp;gt;/volumes/kubernetes.io~csi/&amp;lt;PVC-ID-FOUD-IN-7&amp;gt;/mount/
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;NODE        NAME
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   .
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;10.0.1.66   archivebox
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;ol start=&#34;11&#34;&gt;
+&lt;li&gt;If all that looks familiar, we are ready to restore:&lt;/li&gt;
+&lt;/ol&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl -n velero exec -it &amp;lt;NODE-AGENT-FOUND-IN-9&amp;gt; -- restic restore &amp;lt;SNAPSHOT-ID-FOUND-INITALLY-IN-4&amp;gt; -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/&amp;lt;POD-ID-FOUND-IN-8&amp;gt;/volumes/kubernetes.io~csi/&amp;lt;PVC-ID-FOUD-IN-7&amp;gt;/mount/restore/
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;$ kubectl -n velero exec -it node-agent-k8q9v -- restic restore 4779cab4 -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;enter password &lt;span style=&#34;color:#66d9ef&#34;&gt;for&lt;/span&gt; repository:
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;repository 16397b86 opened &lt;span style=&#34;color:#f92672&#34;&gt;(&lt;/span&gt;version 2, compression level auto&lt;span style=&#34;color:#f92672&#34;&gt;)&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;restoring &amp;lt;Snapshot 4779cab4 of &lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;/host_pods/2e2ed9ef-20f6-43bd-8844-cddd4f5580ca/volumes/kubernetes.io~csi/pvc-bdeb5be2-8ea9-491f-9bbe-4f58de1de88a/mount&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt; at 2023-07-10 23:58:31.344943183 +0200 CEST by root@velero&amp;gt; to /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;/host_pods/ is where velero-node-agent mounts /var/lib/kubelet/pods
+The password is still &lt;code&gt;static-passw0rd&lt;/code&gt;.&lt;/p&gt;
+&lt;ol start=&#34;12&#34;&gt;
+&lt;li&gt;Marvelous.&lt;/li&gt;
+&lt;/ol&gt;
+&lt;h2 id=&#34;lessons-learned&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#lessons-learned&#34;&gt;
+        #
+    &lt;/a&gt;
+    Lessons learned:
+&lt;/div&gt;
+&lt;/h2&gt;&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Don&amp;rsquo;t backup a backup.&lt;/p&gt;
+&lt;p&gt;Multiple backups from same source is the key.&lt;/p&gt;
+&lt;p&gt;If not possible, I would switch tools until it is.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Probably ensure backups work before I do upgrades,&lt;/p&gt;
+&lt;p&gt;but that&amp;rsquo;s probably not going to happen&amp;hellip;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Sources:&lt;/p&gt;
+&lt;p&gt;(1): &lt;a href=&#34;https://github.com/vmware-tanzu/velero/issues/1210&#34;&gt;https://github.com/vmware-tanzu/velero/issues/1210&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;(2): &lt;a href=&#34;https://github.com/vmware-tanzu/velero/discussions/5860&#34;&gt;https://github.com/vmware-tanzu/velero/discussions/5860&lt;/a&gt;&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>

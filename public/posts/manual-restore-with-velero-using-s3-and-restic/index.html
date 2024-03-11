@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+
+
+    
+
+<html lang="en-us" data-theme="dark">
+<head>
+    
+        
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>Manual restore with velero using s3 and restic - davralin</title>
+
+<meta name="description" content="How to restore something from a s3-restic-repo created using velero, when velero is unable to do it automatically.">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="https://blog.davralin.work/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="https://blog.davralin.work/favicon.png">
+
+
+
+
+    
+
+
+
+
+
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <link rel="stylesheet" href="https://blog.davralin.work/css/style.min.34fab757c79886f5fba50162d53c087be9aaa00d0537b6c25d2949204958014a.css" integrity="sha256-NPq3V8eYhvX7pQFi1TwIe&#43;mqoA0FN7bCXSlJIElYAUo=">
+    
+
+
+
+
+
+    
+
+    
+
+
+
+
+
+    
+    
+        
+    
+    
+
+    
+        <script src="https://blog.davralin.work/js/script.min.74bf1a3fcf1af396efa4acf3e660e876b61a2153ab9cbe1893ac24ea6d4f94ee.js" type="text/javascript" charset="utf-8" integrity="sha256-dL8aP88a85bvpKzz5mDodrYaIVOrnL4Yk6wk6m1PlO4="></script>
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header"> 
+            
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/">davralin</a>
+</h1>
+        
+
+    
+
+
+
+  
+        <ul class="social-icons">
+
+
+    
+        
+        
+        <li>
+            <a href="https://github.com/davralin" title="Github" rel="me">
+            <span class="inline-svg" >
+
+
+
+
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+        <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+    </svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+    
+        
+        
+        <li>
+            <a href="mailto:blog@davralin.work" title="Email" rel="me">
+            <span class="inline-svg" >
+
+
+
+
+    
+        
+    
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="currentColor" d="M464 64H48C21.49 64 0 85.49 0 112v288c0 26.51 21.49 48 48 48h416c26.51 0 48-21.49 48-48V112c0-26.51-21.49-48-48-48zm0 48v40.805c-22.422 18.259-58.168 46.651-134.587 106.49-16.841 13.247-50.201 45.072-73.413 44.701-23.208.375-56.579-31.459-73.413-44.701C106.18 199.465 70.425 171.067 48 152.805V112h416zM48 400V214.398c22.914 18.251 55.409 43.862 104.938 82.646 21.857 17.205 60.134 55.186 103.062 54.955 42.717.231 80.509-37.199 103.053-54.947 49.528-38.783 82.032-64.401 104.947-82.653V400H48z"/></svg>
+
+</span>
+
+            </a>
+        </li>
+    
+
+
+
+    <li>
+            <a href="https://blog.davralin.work/index.xml" title="RSS" rel="me">
+            <span class="inline-svg" >
+
+
+
+
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-rss" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" />
+    <path d="M4 4a16 16 0 0 1 16 16" />
+    <path d="M4 11a9 9 0 0 1 9 9" />
+  </svg>
+
+
+</span>
+
+            </a>
+        </li>
+    
+
+</ul>
+    </div>
+    <div class="header-top-right">
+        
+    </div>
+</div>
+
+
+    <nav class="noselect">
+        
+        
+        <a class="" href="https://blog.davralin.work/posts/" title="Archive">Archive</a>
+        
+    </nav>
+
+
+
+
+
+            
+        </header>
+        <main id="main" tabindex="-1"> 
+            
+    
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">Manual restore with velero using s3 and restic</h1>
+                
+            </header>
+            
+
+    
+
+
+
+<div class="post-info noselect">
+    
+        <div class="post-date dt-published">
+            <time datetime="2023-09-11">2023-09-11</time>
+            
+        </div>
+    
+
+    <a class="post-hidden-url u-url" href="https://blog.davralin.work/posts/manual-restore-with-velero-using-s3-and-restic/">https://blog.davralin.work/posts/manual-restore-with-velero-using-s3-and-restic/</a>
+    <a href="https://blog.davralin.work/" class="p-name p-author post-hidden-author h-card" rel="me">davralin</a>
+
+
+    <div class="post-taxonomies">
+        
+            <ul class="post-categories">
+                
+                    
+                    <li><a href="https://blog.davralin.work/categories/velero/">Velero</a></li>
+                
+            </ul>
+        
+        
+            <ul class="post-tags">
+                
+                    
+                    <li><a href="https://blog.davralin.work/tags/restic/">#Restic</a></li>
+                
+                    
+                    <li><a href="https://blog.davralin.work/tags/s3/">#S3</a></li>
+                
+                    
+                    <li><a href="https://blog.davralin.work/tags/velero/">#Velero</a></li>
+                
+                    
+                    <li><a href="https://blog.davralin.work/tags/talos/">#Talos</a></li>
+                
+            </ul>
+        
+        
+    </div>
+</div>
+
+        </div>
+         
+ 
+
+
+
+  
+  
+  
+  <details class="toc noselect">
+    <summary>Table of Contents</summary>
+    <div class="inner"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#offsite-backups-to-the-rescue">Offsite-backups to the rescue</a></li>
+    <li><a href="#digging-through-the-internet-for-an-answer">Digging through the internet for an answer</a></li>
+    <li><a href="#lessons-learned">Lessons learned:</a></li>
+  </ul>
+</nav></div>
+  </details>
+  
+
+
+
+<script>
+  document.querySelector(".toc").addEventListener("click", function () {
+    if (event.target.tagName !== "A") {
+      event.preventDefault();
+      if (this.open) {
+        this.open = false;
+        this.classList.remove("expanded");
+      } else {
+        this.open = true;
+        this.classList.add("expanded");
+      }
+    }
+  });
+</script>
+
+        <div class="content e-content">
+            <h1 id="manual-restore-with-velero-using-s3-and-restic" >
+<div>
+    <a href="#manual-restore-with-velero-using-s3-and-restic">
+        ##
+    </a>
+    Manual restore with velero using s3 and restic
+</div>
+</h1><p>Let me set the scene.</p>
+<p>You have a cluster, you back it up using velero to a local S3-installation (minio), and remote offsite-backup&rsquo;s.</p>
+<p>The cluster runs fine-ish, untill you do an upgrade, which ends up wiping all local storage (this was entirely my fault, not the storage&rsquo;s fault).</p>
+<p>You begin to check out your restore-documentation, and work towards starting velero restore, only to find out that your local S3-installation was deleted during that move you started last week, but didn&rsquo;t quite finish doing yet.
+You begin checking out your offsite-backups, which were rsync&rsquo;ed copies of the before-mentioned S3-installation - only to find out that the rsync is either inconsistent, or just as bad as the S3-installation you moved away from (which had other issues, which again was my fault).</p>
+<p>You start to give up, realising that all those files are just gone, and/or inconsistent.</p>
+<h2 id="offsite-backups-to-the-rescue" >
+<div>
+    <a href="#offsite-backups-to-the-rescue">
+        #
+    </a>
+    Offsite-backups to the rescue
+</div>
+</h2><p>I then realized I had another S3-installation offsite, from back when I experimented with using velero to write to different S3-installations at the same time.
+The idea was that using rsync&rsquo;ed S3-buckets wasn&rsquo;t all that great (go figure.), so I wanted a differeny copy, from the same source.</p>
+<p>I managed to sneakernet the files from the original bucket back to my onsite MinIO-instance, and pointed Velero to the dedicated bucket, abtly named &ldquo;Velero-Offsite&rdquo;, using Helm against the Velero-chart, this is accomlished with:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-yaml" data-lang="yaml"><span style="display:flex;"><span>- <span style="color:#f92672">name</span>: <span style="color:#ae81ff">velero-offsite</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">bucket</span>: <span style="color:#e6db74">&#34;velero-offsite&#34;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">default</span>: <span style="color:#66d9ef">false</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">provider</span>: <span style="color:#ae81ff">aws</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">accessMode</span>: <span style="color:#ae81ff">ReadOnly</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">config</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">region</span>: <span style="color:#e6db74">&#34;${VELERO_S3_REGION}&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">s3ForcePathStyle</span>: <span style="color:#66d9ef">true</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">s3Url</span>: <span style="color:#e6db74">&#34;${S3_URL}&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#f92672">publicUrl</span>: <span style="color:#e6db74">&#34;${VELERO_S3_PUBLIC_URL}&#34;</span>
+</span></span></code></pre></div><p>As of Helm-release 5.0.2, this is defined as a list under <code>configuration.backupStorageLocation</code>.</p>
+<p>After import, Velero listed all those remote backups (all three of them&hellip;) but as &ldquo;PartiallyFailed&rdquo; (there was probably more than one reason for me giving up on the project).</p>
+<p>I tried running a normal restore with Velero, that failed, it never actually restored anything from restic, just all the k8s-resources I could just as easily reproduce with flux&hellip;</p>
+<p>One key difference between this offsite-backup, and the rsync&rsquo;ed copy of the onsite-backup, was the size of the folders (where these folders are the actuall namespaces from the originating k8s-cluster) under the <code>/restic</code>-folder in the bucket - this one actually had a reasonably accurate size according to what I expected, whereas the rsync&rsquo;ed copy had ~125K as reported foldersize.</p>
+<h2 id="digging-through-the-internet-for-an-answer" >
+<div>
+    <a href="#digging-through-the-internet-for-an-answer">
+        #
+    </a>
+    Digging through the internet for an answer
+</div>
+</h2><p>Determined that this bucket actually had the files I wanted, I went searching for an answer.
+Using restic directly against the files in the bucket, was worthless.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e"># restic ls latest -r .</span>
+</span></span><span style="display:flex;"><span>enter password <span style="color:#66d9ef">for</span> repository:
+</span></span><span style="display:flex;"><span>Load<span style="color:#f92672">(</span>&lt;key/a7424b783b&gt;, 0, 0<span style="color:#f92672">)</span> returned error, retrying after 552.330144ms: read keys/a7424b783b93bf66c9036982766365e9cb1aa41b698d069c0879473a94d0574a: is a directory
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>...<span style="color:#f92672">]</span>
+</span></span></code></pre></div><p>(btw, Velero uses a static password of <code>static-passw0rd</code> - might not be that safe, but I&rsquo;m sure as hell glad they had something I could find!)</p>
+<p>Much digging later, I got a clue when I found people that tried to restore single files from a restic-repo created by Velero, and more importantly - they reported success! (1) (2)</p>
+<p>BUT HOW DID THEY DO IT?!</p>
+<p>This is how I eventually figured it all out:</p>
+<ul>
+<li>velero-offsite is consistently used as the name for the LOCAL bucket, which originated from the offsite-location.</li>
+<li>velero is the namespace Velero is installed into.</li>
+</ul>
+<ol>
+<li>
+<p>Have Velero access the buckets like mentioned previously.</p>
+</li>
+<li>
+<p>Ensure Velero can actually read the buckets, and enumerate the backups in there:</p>
+</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> $ velero get backup | grep velero-offsite
+</span></span><span style="display:flex;"><span>velero-daily-offsite-backup-20230724231041   PartiallyFailed   <span style="color:#ae81ff">66</span>       <span style="color:#ae81ff">0</span>          2023-07-24 23:10:41 +0200 CEST   19d ago   velero-offsite         &lt;none&gt;
+</span></span></code></pre></div><ol start="3">
+<li>As part of that backup-enumerate-import-thingy, Velero will also import a set of PodVolumeBackup, find those:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> $ kubectl -n velero get PodVolumeBackup | grep velero-offsite
+</span></span><span style="display:flex;"><span>velero-daily-offsite-backup-20230710231009-w5blz   Completed   63d       archivebox        archivebox-7b7bf94fd4-rl5hm                     config           s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox         restic          offsite            107m
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[</span>...<span style="color:#f92672">]</span>
+</span></span></code></pre></div><ol start="4">
+<li>Figure out the <code>RepoIdentifier</code> and the <code>snapshotID</code> of the given repo.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span> $ kubectl -n velero get PodVolumeBackup velero-daily-offsite-backup-20230710231009-w5blz -oyaml | grep -e repoIdentifier -e snapshotID
+</span></span><span style="display:flex;"><span>  repoIdentifier: s3:http://10.0.2.11:9000/velero-offsite/restic/archivebox
+</span></span><span style="display:flex;"><span>  snapshotID: 4779cab4
+</span></span></code></pre></div><p>The S3-address will be the address to the previous (offsite) location, and you need to ensure it&rsquo;s correct - I had to switch the IP to the local MinIO-instance, you probably do to.</p>
+<ol start="5">
+<li>This part might differ for you, I use Talos, so I have to do some tricks.
+First I have to find the node running the pod I am going to restore too.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n archivebox get pods  -o wide
+</span></span><span style="display:flex;"><span>NAME                                            READY   STATUS      RESTARTS   AGE   IP            NODE     NOMINATED NODE   READINESS GATES
+</span></span><span style="display:flex;"><span>archivebox-7b6c66c695-mlnpk                      1/1     Running     <span style="color:#ae81ff">0</span>          57m   10.244.0.22   rand     &lt;none&gt;           &lt;none&gt;
+</span></span></code></pre></div><p>Rand is a node, with IP <code>10.0.1.66</code></p>
+<ol start="6">
+<li>Now we need to find where that Pod is mounted under the host_path.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ <span style="color:#66d9ef">for</span> i in <span style="color:#66d9ef">$(</span>talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/ | sed <span style="color:#e6db74">&#39;s/10.0.1.66   //g&#39;</span> | grep -v -e NODE<span style="color:#66d9ef">)</span>; <span style="color:#66d9ef">do</span> echo $i; talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/$i/volumes/kubernetes.io~csi/; <span style="color:#66d9ef">done</span> &gt; archivebox
+</span></span></code></pre></div><p>(probably not the most elegant, but I was tired and it worked.)</p>
+<ol start="7">
+<li>Find the ID of the PVC.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n archivebox get pvc
+</span></span><span style="display:flex;"><span>NAME              STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS      AGE
+</span></span><span style="display:flex;"><span>archivebox   Bound    pvc-40109437-464e-4617-8f93-ae3794d3ba0f   20Gi       RWX            ceph-filesystem   51m
+</span></span></code></pre></div><ol start="8">
+<li>Grep the output from command 6, for the PVC-number found in command 7.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ grep -B5 pvc-40109437-464e-4617-8f93-ae3794d3ba0f archivebox
+</span></span><span style="display:flex;"><span>10.0.1.66   .
+</span></span><span style="display:flex;"><span>10.0.1.66   pvc-04e281b8-3039-42b9-bc88-143d38f1cb49
+</span></span><span style="display:flex;"><span>afa37c6c-34e9-40b7-bc27-3f791e44bae0
+</span></span><span style="display:flex;"><span>NODE        NAME
+</span></span><span style="display:flex;"><span>10.0.1.66   .
+</span></span><span style="display:flex;"><span>10.0.1.66   pvc-40109437-464e-4617-8f93-ae3794d3ba0f
+</span></span></code></pre></div><p>You have now found the pod-id (afa37c6c-34e9-40b7-bc27-3f791e44bae0)</p>
+<ol start="9">
+<li>Almost there&hellip; Find the node-agent running on the same host.</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n velero get pods -o wide | grep rand
+</span></span><span style="display:flex;"><span>node-agent-k8q9v         1/1     Running   <span style="color:#ae81ff">0</span>          126m   10.244.0.16   rand       &lt;none&gt;           &lt;none&gt;
+</span></span></code></pre></div><ol start="10">
+<li>As a verification, the following should list the contents of the PVC you are about to restore too:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/&lt;POD-ID-FOUND-IN-8&gt;/volumes/kubernetes.io~csi/&lt;PVC-ID-FOUD-IN-7&gt;/mount/
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ talosctl -n 10.0.1.66 ls /var/lib/kubelet/pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/
+</span></span><span style="display:flex;"><span>NODE        NAME
+</span></span><span style="display:flex;"><span>10.0.1.66   .
+</span></span><span style="display:flex;"><span>10.0.1.66   archivebox
+</span></span></code></pre></div><ol start="11">
+<li>If all that looks familiar, we are ready to restore:</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n velero exec -it &lt;NODE-AGENT-FOUND-IN-9&gt; -- restic restore &lt;SNAPSHOT-ID-FOUND-INITALLY-IN-4&gt; -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/&lt;POD-ID-FOUND-IN-8&gt;/volumes/kubernetes.io~csi/&lt;PVC-ID-FOUD-IN-7&gt;/mount/restore/
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>$ kubectl -n velero exec -it node-agent-k8q9v -- restic restore 4779cab4 -r s3:http://10.0.1.78:9000/velero-offsite/restic/archivebox --target /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
+</span></span><span style="display:flex;"><span>enter password <span style="color:#66d9ef">for</span> repository:
+</span></span><span style="display:flex;"><span>repository 16397b86 opened <span style="color:#f92672">(</span>version 2, compression level auto<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>restoring &lt;Snapshot 4779cab4 of <span style="color:#f92672">[</span>/host_pods/2e2ed9ef-20f6-43bd-8844-cddd4f5580ca/volumes/kubernetes.io~csi/pvc-bdeb5be2-8ea9-491f-9bbe-4f58de1de88a/mount<span style="color:#f92672">]</span> at 2023-07-10 23:58:31.344943183 +0200 CEST by root@velero&gt; to /host_pods/afa37c6c-34e9-40b7-bc27-3f791e44bae0/volumes/kubernetes.io~csi/pvc-40109437-464e-4617-8f93-ae3794d3ba0f/mount/restore/
+</span></span></code></pre></div><p>/host_pods/ is where velero-node-agent mounts /var/lib/kubelet/pods
+The password is still <code>static-passw0rd</code>.</p>
+<ol start="12">
+<li>Marvelous.</li>
+</ol>
+<h2 id="lessons-learned" >
+<div>
+    <a href="#lessons-learned">
+        #
+    </a>
+    Lessons learned:
+</div>
+</h2><ul>
+<li>
+<p>Don&rsquo;t backup a backup.</p>
+<p>Multiple backups from same source is the key.</p>
+<p>If not possible, I would switch tools until it is.</p>
+</li>
+<li>
+<p>Probably ensure backups work before I do upgrades,</p>
+<p>but that&rsquo;s probably not going to happen&hellip;</p>
+</li>
+</ul>
+<p>Sources:</p>
+<p>(1): <a href="https://github.com/vmware-tanzu/velero/issues/1210">https://github.com/vmware-tanzu/velero/issues/1210</a></p>
+<p>(2): <a href="https://github.com/vmware-tanzu/velero/discussions/5860">https://github.com/vmware-tanzu/velero/discussions/5860</a></p>
+
+        </div>
+
+    </article>
+    
+    
+        
+        
+    
+
+    
+        
+    
+    
+    <div class="pagination post-pagination">
+        <div class="left pagination-item ">
+            
+                <a href="/posts/limit-max-battery-charging-on-chimeraos/">Limit max battery charging on ChimeraOS</a>
+            
+        </div>
+        <div class="right pagination-item ">
+            
+                <a href="/posts/haproxy-unable-to-manipulate-header-on-a-redirect-request/">HAProxy http-response add-header on a redirect request</a>
+            
+        </div>
+    </div>
+
+
+
+
+    
+
+    
+        
+
+
+
+
+
+
+
+
+    
+
+        </main>
+        
+            <footer class="common-footer noselect">
+    
+    
+
+    <div class="common-footer-bottom">
+        
+        
+        <div>
+            © davralin, 2024
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+            
+        </div> 
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=https://blog.davralin.work/ class="p-name u-url url fn" rel="me">davralin</a> 
+
+     
+        /
+        <a class="p-email u-email email" rel="me" href="mailto:blog@davralin.work">blog@davralin.work</a>
+    
+
+    
+</p> 
+</footer>
+
+        
+    </div>
+</body>
+</html>

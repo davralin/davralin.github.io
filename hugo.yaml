@@ -1,0 +1,41 @@
+languageCode: "en-us"
+baseUrl: "https://blog.davralin.work"
+title: "davralin"
+theme: "anubis2"
+paginate: 10
+enableRobotsTXT: true
+
+menu:
+  main:
+  - identifier: archive
+    name: Archive
+    title: Archive
+    url: /posts/
+    weight: 0
+
+params:
+  author: "davralin"
+  email: blog@davralin.work
+  description: "Tech ramblings and various notes on stuff"
+  dateFormat: "2006-01-02"
+  paginationSinglePost: true
+  style: dark-without-switcher
+  mainSections: [ "posts" ] # which sections should be on index/main page
+  sectionsWithFullContentOnListPage: [ "notes" ] # for which sections content should be displayed on list pages
+  readMore: false
+  readNextPosts: 5  # show 5 related posts, 0 by default
+  disableSummary: true
+  toc: true # display Table of Contents
+  tocWordCount: 300 # ...when a post is longer than 300 words
+  copyCodeButton: true # true by default
+  rssAsSocialIcon: true
+  social:
+  - id: github
+    name: davralin
+  - id: email
+    name: blog@davralin.work
+
+markup:
+  goldmark:
+    renderer:
+      unsafe: true # enable raw HTML in Markdown

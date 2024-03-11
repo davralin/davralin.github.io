@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Chimeraos on davralin</title>
+    <link>https://blog.davralin.work/categories/chimeraos/</link>
+    <description>davralin (Chimeraos)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 10 Feb 2024 21:26:03 +0000</lastBuildDate>
+    
+    <atom:link href="https://blog.davralin.work/categories/chimeraos/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Limit max battery charging on ChimeraOS</title>
+      <link>https://blog.davralin.work/posts/limit-max-battery-charging-on-chimeraos/</link>
+      <pubDate>Sat, 10 Feb 2024 21:26:03 +0000</pubDate>
+      
+      <guid>https://blog.davralin.work/posts/limit-max-battery-charging-on-chimeraos/</guid>
+      <description>&lt;h1 id=&#34;intro&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#intro&#34;&gt;
+        ##
+    &lt;/a&gt;
+    Intro
+&lt;/div&gt;
+&lt;/h1&gt;&lt;p&gt;ChimeraOS is a great SteamOS-alternative, which serves as an appliance, that appliance introduces the ItJustWorks-factor,
+but hinders the &amp;ldquo;I want to edit-something&amp;rdquo;-factor.&lt;/p&gt;
+&lt;p&gt;I use it on a laptop, but I can&amp;rsquo;t remove the battery on that laptop - and I don&amp;rsquo;t want to have the battery constantly charged to 100%.&lt;/p&gt;
+&lt;h2 id=&#34;systemd-to-the-rescue&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#systemd-to-the-rescue&#34;&gt;
+        #
+    &lt;/a&gt;
+    Systemd to the rescue.
+&lt;/div&gt;
+&lt;/h2&gt;&lt;p&gt;/home/gamer/.config/systemd/user/battery-limiter.service&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Battery Limiter
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Service&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Type&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;simple
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;ExecStart&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;/home/gamer/battery-limit.sh
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;/home/gamer/.config/systemd/user/battery-limiter.timer&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Description&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;Battery Limiter
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Timer&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;Unit&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;battery-limiter.service
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;OnBootSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;OnUnitInactiveSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;15m
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;OnActiveSec&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;1s
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#f92672&#34;&gt;[&lt;/span&gt;Install&lt;span style=&#34;color:#f92672&#34;&gt;]&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;WantedBy&lt;span style=&#34;color:#f92672&#34;&gt;=&lt;/span&gt;timers.target
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Replace &lt;code&gt;INSERTPASSWORDHERE&lt;/code&gt; with the currently set password for the gamer-account, by default that is gamer.
+/home/gamer/battery-limit.sh&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-shell&#34; data-lang=&#34;shell&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;#!/bin/bash
+&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#75715e&#34;&gt;&lt;/span&gt;echo INSERTPASSWORDHERE | sudo -S /bin/bash -c &lt;span style=&#34;color:#e6db74&#34;&gt;&amp;#39;echo 60 &amp;gt; /sys/class/power_supply/BAT0/charge_control_end_threshold&amp;#39;&lt;/span&gt;
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Activate the timer&lt;/p&gt;
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre tabindex=&#34;0&#34; style=&#34;color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;&#34;&gt;&lt;code class=&#34;language-bash&#34; data-lang=&#34;bash&#34;&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;mkdir -p /home/gamer/.config/systemd/user/timers.target.wants; ln -s /home/gamer/.config/systemd/user/regular-maintenance.timer /home/gamer/.config/systemd/user/timers.target.wants/regular-maintenance.timer
+&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;h1 id=&#34;outro&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#outro&#34;&gt;
+        ##
+    &lt;/a&gt;
+    Outro
+&lt;/div&gt;
+&lt;/h1&gt;&lt;p&gt;I documented this based on memory and a semi-recent backup, so it might not be 100% correct - but the most important bits should be present and &amp;ldquo;good enough&amp;rdquo;.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
