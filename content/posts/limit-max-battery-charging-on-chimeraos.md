@@ -50,9 +50,14 @@ Replace `INSERTPASSWORDHERE` with the currently set password for the gamer-accou
 echo INSERTPASSWORDHERE | sudo -S /bin/bash -c 'echo 60 > /sys/class/power_supply/BAT0/charge_control_end_threshold'
 ````
 
-Activate the timer
+Activate the timer/service/exec
 ````bash
-mkdir -p /home/gamer/.config/systemd/user/timers.target.wants; ln -s /home/gamer/.config/systemd/user/regular-maintenance.timer /home/gamer/.config/systemd/user/timers.target.wants/regular-maintenance.timer
+mkdir -p /home/gamer/.config/systemd/user/timers.target.wants
+ln -s /home/gamer/.config/systemd/user/regular-maintenance.timer /home/gamer/.config/systemd/user/timers.target.wants/regular-maintenance.timer
+chmod +x /home/gamer/battery-limit.sh
+systemctl --user daemon-reload
+systemctl --user enable battery-limiter.service
+systemctl --user enable battery-limiter.timer
 ````
 
 
