@@ -8,7 +8,19 @@
   ],
   "dependencyDashboardTitle": "Renovate Dashboard",
   "assigneesFromCodeOwners": true,
+  // Since we don't have tests, and we want automerge enabled
+  "ignoreTests": true,
   "packageRules": [
+    {
+      "description": ["Auto-merge container patch for trusted containers"],
+      "matchDatasources": ["docker"],
+      "automerge": true,
+      "automergeType": "branch",
+      "matchUpdateTypes": ["patch"],
+      "matchPackagePatterns": [
+	      "registry.gitlab.com/pages/hugo/hugo_extended"
+      ]
+    },
     {
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["major"],
