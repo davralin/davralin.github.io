@@ -14,9 +14,13 @@ tags:
 ChimeraOS is a great SteamOS-alternative, which serves as an appliance, that appliance introduces the ItJustWorks-factor,
 but hinders the "I want to edit-something"-factor.
 
-I use it on a laptop, but I can't remove the battery on that laptop - and I don't want to have the battery constantly charged to 100%.
+I use it on a ROG Ally, primarily docked, but I don't want to have the battery constantly charged to 100%.
 
 ## Systemd to the rescue.
+
+````shell
+mkdir -p /home/gamer/.config/systemd/user/
+````
 
 /home/gamer/.config/systemd/user/battery-limiter.service
 ````shell
@@ -56,11 +60,10 @@ mkdir -p /home/gamer/.config/systemd/user/timers.target.wants
 ln -s /home/gamer/.config/systemd/user/regular-maintenance.timer /home/gamer/.config/systemd/user/timers.target.wants/regular-maintenance.timer
 chmod +x /home/gamer/battery-limit.sh
 systemctl --user daemon-reload
-systemctl --user enable battery-limiter.service
-systemctl --user enable battery-limiter.timer
+systemctl --user enable --now battery-limiter.service
+systemctl --user enable --now battery-limiter.timer
 ````
-
 
 # Outro
 
-I documented this based on memory and a semi-recent backup, so it might not be 100% correct - but the most important bits should be present and "good enough".
+Last tested on ChimeraOS 49.
